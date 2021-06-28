@@ -4,3 +4,7 @@ matplotlib
 sklearn
 cmake>=3.18.4.post1
 xlearn==0.40a1
+seaborn
+requests
+tqdm
+retrying
