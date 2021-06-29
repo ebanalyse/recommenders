@@ -174,3 +174,6 @@ examples/07_tutorials/KDD2020-tutorial/data_folder/
 tests/**/resources/
 reports/
 venv/
+criteo/
+model_output
+tester
