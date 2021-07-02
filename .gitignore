@@ -177,3 +177,8 @@ venv/
 criteo/
 model_output
 tester
+model.out
+movielens/
+test.txt
+testffm.txt
+*.bin
