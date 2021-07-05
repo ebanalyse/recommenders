@@ -170,5 +170,31 @@ corpus = news[[3,4]]
 corpus = corpus.fillna("")
 corpus = corpus[3] + ". " + corpus[4]
 from sklearn.feature_extraction.text import TfidfVectorizer
-vectorizer = TfidfVectorizer(max_features=500)
-X = vectorizer.fit(corpus)
+tfidf = TfidfVectorizer(max_features=10)
+X = tfidf.fit(corpus)
+tfidf.transform(corpus)
+
+sessions, history = read_clickhistory(os.path.join(mind_path, "train"), "behaviors.tsv")
+hist = sessions[0][1]
+
+hist = news[news[0].isin(hist)]
+hist = hist[[3,4]]
+hist = hist.fillna("")
+hist = hist[3] + ". " + hist[4]
+tfidf.transform(hist)
+
+#news[0] in ["N3112"]
+#(news[0] in hist).any()
+
+
+
+
+
+
+
+
+
+
+
+
+
