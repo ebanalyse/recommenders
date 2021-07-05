@@ -24,7 +24,7 @@ import time
 
 # download data set
 mind_path = "mind"
-dataset = "small"
+dataset = "demo"
 download = False
 add_news_features = True
 
@@ -155,7 +155,7 @@ fm_model.setTrain(os.path.join(mind_path, file_train))     # Set the path of tra
 fm_model.setValidate(os.path.join(mind_path, file_dev))  # Set the path of validation dataset
 
 param = {"task":"binary", 
-         "lr": 0.2, 
+         "lr": 0.3, 
          "lambda": 0.02, 
          "metric": 'auc',
          "stop_window": 5,
@@ -164,4 +164,11 @@ param = {"task":"binary",
 
 fm_model.fit(param, "./model_output")
 
-
+#TF-IDF
+news = pd.read_csv(f"{mind_path}/train/news.tsv", sep="\t", header=None)
+corpus = news[[3,4]]
+corpus = corpus.fillna("")
+corpus = corpus[3] + ". " + corpus[4]
+from sklearn.feature_extraction.text import TfidfVectorizer
+vectorizer = TfidfVectorizer(max_features=500)
+X = vectorizer.fit(corpus)
