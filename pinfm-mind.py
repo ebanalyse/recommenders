@@ -21,6 +21,10 @@ import multiprocessing as mp
 from multiprocessing.pool import ThreadPool
 import re
 import time
+import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+
+
 
 # download data set
 mind_path = "mind"
@@ -172,29 +176,54 @@ corpus = corpus[3] + ". " + corpus[4]
 from sklearn.feature_extraction.text import TfidfVectorizer
 tfidf = TfidfVectorizer(max_features=10)
 X = tfidf.fit(corpus)
-tfidf.transform(corpus)
+# tfidf.transform(corpus)
 
+news = pd.read_csv(f"{mind_path}/train/news.tsv", sep="\t", header=None)
 sessions, history = read_clickhistory(os.path.join(mind_path, "train"), "behaviors.tsv")
-hist = sessions[0][1]
-
-hist = news[news[0].isin(hist)]
-hist = hist[[3,4]]
-hist = hist.fillna("")
-hist = hist[3] + ". " + hist[4]
-tfidf.transform(hist)
-
-#news[0] in ["N3112"]
-#(news[0] in hist).any()
 
 
 
+import concurrent
+
+def helper(session, tfidf, news):
+    hist = session[1]
+    hist = news[news[0].isin(hist)]
+    hist = hist[[3,4]]
+    hist = hist.fillna("")
+    hist = hist[3] + ". " + hist[4]
+    hist = hist.str.cat(sep=". ")
+    return hist
+
+start_time = time.time()
+texts = list(map(lambda x: helper(x, tfidf=tfidf, news=news), sessions))
+
+seconds = time.time() - start_time
+print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
+
+start_time = time.time()
+out = tfidf.transform(texts)
+
+seconds = time.time() - start_time
+print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
 
 
+    out = tfidf.transform([hist])
+
+from multiprocessing.pool import ThreadPool
+
+#pool = ThreadPool(processes=6)
+#out = pool.map(lambda x: helper(x, tfidf=tfidf, news=news), sessions)
 
 
+# from tester import starfish, helper
+# 
+# nums = [1, 2, 3]
+# 
+# import concurrent.futures
+# with concurrent.futures.ProcessPoolExecutor() as executor:
+#     results = executor.map(lambda x: helper(x, tfidf=tfidf, news=news), sessions[:5])
 
 
-
-
-
+seconds = time.time() - start_time
+print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
 
