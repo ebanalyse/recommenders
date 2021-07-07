@@ -23,8 +23,7 @@ import re
 import time
 import multiprocessing
 from concurrent.futures import ProcessPoolExecutor
-
-
+from datatable import dt, f, by, g, join, sort, update, ifelse, rowany
 
 # download data set
 mind_path = "mind"
@@ -181,11 +180,9 @@ X = tfidf.fit(corpus)
 news = pd.read_csv(f"{mind_path}/train/news.tsv", sep="\t", header=None)
 sessions, history = read_clickhistory(os.path.join(mind_path, "train"), "behaviors.tsv")
 
-
-
 import concurrent
 
-def helper(session, tfidf, news):
+def helper(session, news):
     hist = session[1]
     hist = news[news[0].isin(hist)]
     hist = hist[[3,4]]
@@ -194,14 +191,43 @@ def helper(session, tfidf, news):
     hist = hist.str.cat(sep=". ")
     return hist
 
-start_time = time.time()
-texts = list(map(lambda x: helper(x, tfidf=tfidf, news=news), sessions))
+def helper(session, news):
+    # DT = news.copy()
+    hist = session[1]
+    DT = DT[[f.newsid == i for i in hist], ["title","lead"]]
+    #items = ['A','B']
+    #regex = f"{'|'.join(items)}"
+    #df[f.V1.re_match(regex),:]
+    DT.replace({None:""})
+    DT[:, update(text=f.title + ". " + f.lead)]
+    o = ". ".join(DT[:,"text"].to_list()[0])
+    return o
 
-seconds = time.time() - start_time
+start_time = time.time()
+
+news = dt.Frame(news)
+news.names = {"0": "newsid",
+            "3": "title",
+            "4": "lead"}
+
+texts = list(map(lambda x: helper(x, news=news), sessions))
+seconds = time.time() - start_time 
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
 
 start_time = time.time()
-out = tfidf.transform(texts)
+#texts = list(map(lambda x: helper(x, news=news), sessions))
+o = tfidf.transform(texts)
+seconds = time.time() - start_time
+print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
+
+
+news = pd.read_csv(f"{mind_path}/dev/news.tsv", sep="\t", header=None)
+corpus = news[[3,4]]
+corpus = corpus.fillna("")
+corpus = corpus[3] + ". " + corpus[4]
+
+start_time = time.time()
+out = tfidf.transform(corpus)
 
 seconds = time.time() - start_time
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
