@@ -4,7 +4,12 @@ from tempfile import TemporaryDirectory
 import xlearn as xl
 from sklearn.metrics import roc_auc_score
 import numpy as np
+
+#import os
+#os.environ["MODIN_ENGINE"] = "ray"  # Modin will use Rayimport pandas as pd
+
 import pandas as pd
+
 import seaborn as sns
 from matplotlib import pyplot as plt
 from reco_utils.common.constants import SEED
@@ -174,13 +179,28 @@ corpus = corpus.fillna("")
 corpus = corpus[3] + ". " + corpus[4]
 from sklearn.feature_extraction.text import TfidfVectorizer
 tfidf = TfidfVectorizer(max_features=10)
-X = tfidf.fit(corpus)
+tfidf.fit(corpus)
 # tfidf.transform(corpus)
 
 news = pd.read_csv(f"{mind_path}/train/news.tsv", sep="\t", header=None)
 sessions, history = read_clickhistory(os.path.join(mind_path, "train"), "behaviors.tsv")
 
-import concurrent
+# session = sessions[0][1]
+
+# ids = news[0].to_list()
+# news = news[[3,4]]
+# news = news.fillna("")
+# news = news[3] + ". " + news[4]
+# 
+# def c_texts(session):
+#     if session == ['']:
+#         return ""
+#     idx = [ids.index(id) for id in session]
+#     out = news[idx]
+#     out = ". ".join(out)
+#     return out 
+# 
+# o = [c_texts(session[1]) for session in sessions[:1000]]
 
 def helper(session, news):
     hist = session[1]
@@ -191,32 +211,59 @@ def helper(session, news):
     hist = hist.str.cat(sep=". ")
     return hist
 
-def helper(session, news):
-    # DT = news.copy()
-    hist = session[1]
-    DT = DT[[f.newsid == i for i in hist], ["title","lead"]]
-    #items = ['A','B']
-    #regex = f"{'|'.join(items)}"
-    #df[f.V1.re_match(regex),:]
-    DT.replace({None:""})
-    DT[:, update(text=f.title + ". " + f.lead)]
-    o = ". ".join(DT[:,"text"].to_list()[0])
-    return o
+# def helper(session, news):
+#     # DT = news.copy()
+#     hist = session[1]
+#     DT = DT[[f.newsid == i for i in hist], ["title","lead"]]
+#     #items = ['A','B']
+#     #regex = f"{'|'.join(items)}"
+#     #df[f.V1.re_match(regex),:]
+#     DT.replace({None:""})
+#     DT[:, update(text=f.title + ". " + f.lead)]
+#     o = ". ".join(DT[:,"text"].to_list()[0])
+#     return o
 
 start_time = time.time()
 
-news = dt.Frame(news)
-news.names = {"0": "newsid",
-            "3": "title",
-            "4": "lead"}
+# o = [c_texts(session[1]) for session in sessions]
+#news = dt.Frame(news)
+#news.names = {"0": "newsid",
+#            "3": "title",
+#            "4": "lead"}
 
-texts = list(map(lambda x: helper(x, news=news), sessions))
-seconds = time.time() - start_time 
+
+import numpy as np
+from multiprocessing import Pool
+from tester import xhelper
+
+
+sessions = [session[1] for session in sessions[:100]]
+
+start_time = time.time()
+chunks = np.array_split(sessions, 12)
+
+chunks = [{'sessions':x, 'news':news} for x in chunks] 
+
+p=Pool(12)
+out = p.map(xhelper, chunks)
+seconds = time.time() - start_time
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
 
-start_time = time.time()
-#texts = list(map(lambda x: helper(x, news=news), sessions))
-o = tfidf.transform(texts)
+
+
+xhelper(chunks[0], news)
+
+
+
+   
+
+texts = list(map(lambda x: helper(x, news=news), sessions))
+
+
+
+
+
+# tfidf.transform(texts)
 seconds = time.time() - start_time
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
 
@@ -231,6 +278,8 @@ out = tfidf.transform(corpus)
 
 seconds = time.time() - start_time
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))    
+
+
 
 
     out = tfidf.transform([hist])
