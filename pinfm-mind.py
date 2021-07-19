@@ -40,10 +40,10 @@ from sklearn.metrics import roc_auc_score
 
 # CONFIG
 mind_path = "mind"
-dataset = "small"
+dataset = "demo"
 download = False
 add_news_features = False
-tfidf_k = 6000
+tfidf_k = 3000
 
 #import nltk
 #nltk.download('stopwords')
@@ -195,7 +195,6 @@ def apply_tfidf_parallel_hist(df, tfidf, mind_path=mind_path, part="train", n_pr
     chunks = [x.tolist() for x in chunks]
     def subset(x):
         return out[x]
-    
     out = list(map(subset, chunks))
     out = scipy.sparse.vstack(out).tocsr()
     out = pd.DataFrame.sparse.from_spmatrix(out)
@@ -213,6 +212,16 @@ print("Apply TFIDF to train....")
 trn = apply_tfidf_parallel_hist(df=trn, mind_path=mind_path, part="train", tfidf=tfidf)
 seconds = time.time() - start_time
 print('Time Taken:', time.strftime("%H:%M:%S",time.gmtime(seconds)))  
+
+# open a file, where you ant to store the data
+#file = open('train.pkl', 'wb')
+
+# dump information to that file
+#pickle.dump(trn, file)
+
+# close the file
+# file.close()
+
 
 categorical_features = ['user_id', 'news_id']
 categorical_transformer = OneHotEncoder(handle_unknown='ignore', sparse=True, dtype=np.int)
@@ -238,7 +247,6 @@ def to_Xy(x):
     return X, y
 
 X_trn, y_trn = to_Xy(trn)
-
 
 #converter = LibffmConverter().fit(trn, col_rating='label')
 
@@ -285,6 +293,15 @@ data = "dev"
 dev = get_data("dev",mind_path=mind_path)
 dev = apply_tfidf_parallel_hist(df=dev, mind_path=mind_path, part=data, tfidf=tfidf)
 X_dev, y_dev = to_Xy(dev)
+
+# open a file, where you ant to store the data
+#file = open('dev.pkl', 'wb')
+
+# dump information to that file
+#pickle.dump(trn, file)
+
+# close the file
+# file.close()
 
 from pyfm import pylibfm
 
